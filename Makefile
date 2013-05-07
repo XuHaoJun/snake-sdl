@@ -24,6 +24,6 @@ check-syntax:
 	#clang -fsyntax-only -fno-color-diagnostics ${SRC}
 
 clean:
-	-rm -rf *.o ${TARGET} GPATH GTAGS GRTAGS
+	-rm -rf *.o ${TARGET}
 
 .PHONY = all clean global
