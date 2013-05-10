@@ -844,6 +844,21 @@ int setup()
   return 0;
 }
 
+void wait_any_key()
+{
+  bool done = false;
+  while((!done) && (SDL_WaitEvent(&event)))
+  {
+    switch(event.type)
+    {
+      default:
+        done = true;
+        break;
+    }   // End switch
+  }   // End while
+  return;
+}
+
 int main(int argc, char *argv[])
 {
   parse_opt(argc, argv);
@@ -854,6 +869,7 @@ int main(int argc, char *argv[])
 
   if (game_quit == true)
   {
+    wait_any_key();
     sdl_clean_up();
   }
 
