@@ -1,5 +1,5 @@
 #include "SDL/SDL.h"
-bool quit;
+bool game_quit;
 
 bool  is_timeout_mode = false;
 bool  is_status_bar   = false;

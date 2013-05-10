@@ -130,7 +130,7 @@ void init_fruit()
 void init_game()
 {
   game_global_time      = SDL_GetTicks();
-  game_tick_period      = 65;
+  game_tick_period      = 80;
   game_score            = 0;
   game_screen_height = SCREEN_HEIGHT;
   game_screen_width = SCREEN_WIDTH;
@@ -452,7 +452,7 @@ void game_handle_input()
           break;
 
         case SDLK_ESCAPE:
-          quit = true;
+          game_quit = true;
           break;
 
         default: ;
@@ -462,7 +462,7 @@ void game_handle_input()
     if( event.type == SDL_QUIT )
     {
       //Quit the program
-      quit = true;
+      game_quit = true;
     }
   }
 }
@@ -476,14 +476,14 @@ void cal_snake_position()
       if(snake_velocity_x!=0)
       {
         int snake_velocity_x_move_distance = (snake_velocity_x * snake_move_distance);
-        int current_snake_x = snake[i].x+=snake_velocity_x_move_distance;
-        snake[0].x = current_snake_x;
+        int current_snake_x = snake[i].x + snake_velocity_x_move_distance;
+        snake[i].x = current_snake_x;
       }
       else if(snake_velocity_y!=0)
       {
         int snake_velocity_y_move_distance = (snake_velocity_y * snake_move_distance);
-        int current_snake_y = snake[i].y+=snake_velocity_y_move_distance;
-        snake[0].y = current_snake_y;
+        int current_snake_y = snake[i].y + snake_velocity_y_move_distance;
+        snake[i].y = current_snake_y;
       }
       break;
     }
@@ -694,13 +694,13 @@ void random_fruit_collision()
 void start_game()
 {
   //start handle game
-  quit = false;
+  game_quit = false;
 
   srand((unsigned)time( NULL ));
 
-  while (quit == false)
+  while (game_quit == false)
   {
-    if (quit == true)
+    if (game_quit == true)
     {
       break;
     }
@@ -708,7 +708,7 @@ void start_game()
     //game limit kill
     if(is_timeout_mode_kill() == true)
     {
-      quit = true;
+      game_quit = true;
       break;
     }
 
@@ -727,7 +727,7 @@ void start_game()
       {
         if(check_die_snake_wall())
         {
-          quit = true;
+          game_quit = true;
           break;
         }
         else
@@ -742,7 +742,7 @@ void start_game()
       {
         if(check_die_snake_obstacle())
         {
-          quit = true;
+          game_quit = true;
           break;
         }
         else
@@ -795,7 +795,7 @@ void start_game()
       {
         if(check_collision_snake_self())
         {
-          quit = true;
+          game_quit = true;
           break;
         }
       }
@@ -852,7 +852,7 @@ int main(int argc, char *argv[])
 
   start_game();
 
-  if (quit == true)
+  if (game_quit == true)
   {
     sdl_clean_up();
   }
