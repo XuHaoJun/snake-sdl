@@ -666,10 +666,10 @@ bool fruit_on_wall_p()
 
 void get_game_bouns()
 {
-  int score_addup = 1;
+  score_addup = 1;
   add_game_score(score_addup);
 
-  int snake_length_addup = 1;
+  snake_length_addup = 1;
   add_snake_length(snake_length_addup);
 
   be_ate_fruit[0] = true;

@@ -32,6 +32,11 @@ Uint32 fruit_recover_time;
 int fruit_tick_period;
 // end of about fruit
 
+//about snake and fruit
+int snake_length_addup;
+int score_addup;
+// end of about snake and fruit
+
 //about obstacle
 SDL_Rect obstacle[99];
 Uint32 obstacle_color[99];
