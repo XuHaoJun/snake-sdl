@@ -1,2 +1,2 @@
 #!/bin/sh
-./snake -s -t --wall
+./snake -s -t --wall $@
