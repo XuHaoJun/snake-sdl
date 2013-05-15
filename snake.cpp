@@ -9,7 +9,6 @@
 #include "snake.hpp"
 using namespace std;
 
-// double game_timeout          = 0;
 Uint32 game_timeout_time        = 0;
 
 const int SCREEN_WIDTH  = 640;
@@ -755,6 +754,9 @@ void start_game()
       //fruit
       if(snake_ate_fruit())
       {
+        fruit[0].x = -1;
+        fruit[0].y = -1;
+
         get_game_bouns();
       }
       else if (be_ate_fruit[0] == false)
