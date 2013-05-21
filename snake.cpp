@@ -690,6 +690,99 @@ void random_fruit_collision()
   }while(repeat_check==true);
 }
 
+void game_update_wall()
+{
+  //wall
+  if(is_wall_mode)
+  {
+    if(check_die_snake_wall())
+    {
+      game_quit = true;
+    }
+    else
+    {
+      draw_wall();
+    }
+  }
+  //end of wall
+}
+
+void game_update_obstacle()
+{
+  //obstacle
+  if(is_obstacle_mode)
+  {
+    if(check_die_snake_obstacle())
+    {
+      game_quit = true;
+    }
+    else
+    {
+      draw_obstacle();
+    }
+  }
+  //end of obstacle
+}
+
+void game_update_fruit()
+{
+  //fruit
+  if(snake_ate_fruit())
+  {
+    fruit[0].x = -1;
+    fruit[0].y = -1;
+
+    get_game_bouns();
+  }
+  else if (be_ate_fruit[0] == false)
+  {
+    //draw fruit
+    SDL_FillRect( screen, &fruit[0], SDL_MapRGB( screen->format, 0x00, 0xFF, 0x00 ) );
+    //sync recover time
+    fruit_recover_time        = SDL_GetTicks();
+  }
+  else if((SDL_GetTicks() - fruit_recover_time) >= fruit_tick_period)
+  {
+    be_ate_fruit[0] = false;
+    random_fruit();
+
+    if(is_obstacle_mode || is_wall_mode)
+    {
+      random_fruit_collision();
+    }
+  }
+  //end of fruit
+}
+void game_update_statusbar()
+{
+      //status bar
+      if(SHOW_STATUS_BAR)
+      {
+        draw_game_information_on_statusbar();
+      }
+      //end of status bar
+}
+void game_update_snake()
+{
+      //snake
+      cal_snake_position();
+
+      if(is_wall_mode != true)
+      {
+        cal_snake_nowall_position();
+      }
+
+      if(is_no_die_mode != true)
+      {
+        if(check_collision_snake_self())
+        {
+          game_quit = true;
+        }
+      }
+      draw_snake();
+      //end of snake
+}
+
 void start_game()
 {
   //start handle game
@@ -721,94 +814,22 @@ void start_game()
       SDL_FillRect( screen, &screen->clip_rect, SDL_MapRGB( screen->format, 0x00, 0x00, 0x00 ) );
       // next draw anything
 
-      //wall
-      if(is_wall_mode)
-      {
-        if(check_die_snake_wall())
-        {
-          game_quit = true;
-          break;
-        }
-        else
-        {
-          draw_wall();
-        }
-      }
-      //end of wall
+      game_update_wall();
 
-      //obstacle
-      if(is_obstacle_mode)
-      {
-        if(check_die_snake_obstacle())
-        {
-          game_quit = true;
-          break;
-        }
-        else
-        {
-          draw_obstacle();
-        }
-      }
-      //end of obstacle
+      game_update_obstacle();
 
-      //fruit
-      if(snake_ate_fruit())
-      {
-        fruit[0].x = -1;
-        fruit[0].y = -1;
+      game_update_fruit();
 
-        get_game_bouns();
-      }
-      else if (be_ate_fruit[0] == false)
-      {
-        //draw fruit
-        SDL_FillRect( screen, &fruit[0], SDL_MapRGB( screen->format, 0x00, 0xFF, 0x00 ) );
-        //sync recover time
-        fruit_recover_time        = SDL_GetTicks();
-      }
-      else if((SDL_GetTicks() - fruit_recover_time) >= fruit_tick_period)
-      {
-        be_ate_fruit[0] = false;
-        random_fruit();
+      game_update_statusbar();
 
-        if(is_obstacle_mode || is_wall_mode)
-        {
-          random_fruit_collision();
-        }
-      }
-      //end of fruit
+      game_update_statusbar();
 
-      //status bar
-      if(SHOW_STATUS_BAR)
-      {
-        draw_game_information_on_statusbar();
-      }
-      //end of status bar
-
-      //snake
-      cal_snake_position();
-
-      if(is_wall_mode != true)
-      {
-        cal_snake_nowall_position();
-      }
-
-      if(is_no_die_mode != true)
-      {
-        if(check_collision_snake_self())
-        {
-          game_quit = true;
-          break;
-        }
-      }
-      draw_snake();
-      //end of snake
+      game_update_snake();
 
       game_global_time = SDL_GetTicks();
     }
 
     SDL_Flip(screen);
-    //cout << snake[0].x << " " << snake[0].y << endl;
 
     // SDL_Delay( 50 );
   }
