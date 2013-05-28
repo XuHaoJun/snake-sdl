@@ -822,8 +822,6 @@ void start_game()
 
       game_update_statusbar();
 
-      game_update_statusbar();
-
       game_update_snake();
 
       game_global_time = SDL_GetTicks();
@@ -874,9 +872,11 @@ void wait_any_key()
   {
     switch(event.type)
     {
-      default:
+      case SDLK_ESCAPE:
         done = true;
-        break;
+
+      default: ;
+
     }   // End switch
   }   // End while
   return;
