@@ -60,6 +60,7 @@ void apply_surface (int x, int y, SDL_Surface* source, SDL_Surface* destination)
   SDL_BlitSurface(source, NULL, destination, &offset);
 }
 
+
 bool init_sdl()
 {
   if(SDL_Init (SDL_INIT_EVERYTHING) == -1)
@@ -85,6 +86,7 @@ bool init_sdl()
   return true;
 
 }
+
 void init_snake()
 {
   snake_length          = 2;
@@ -114,25 +116,44 @@ void init_snake()
   }
 
 }
+
 void init_fruit()
 {
   fruit_recover_time    = 0;
   fruit_tick_period     = 1000;
 
-  int fruit_init_x = (int) game_screen_width / 2;
-  int fruit_init_y = (int) game_screen_height / 2;
+  int fruit_init_x = (int) (game_screen_width / 2);
+  int fruit_init_y = (int) (game_screen_height / 2) - 20;
   fruit[0].x    = fruit_init_x;
   fruit[0].y    = fruit_init_y;
   fruit[0].w    = 20;
   fruit[0].h    = 20;
 }
+
 void init_game()
 {
+  game_quit = false;
   game_global_time      = SDL_GetTicks();
-  game_tick_period      = 80;
+  game_init_time        = game_global_time;
+  if(is_speed == false)
+  {
+    game_tick_period      = 80;
+  }
   game_score            = 0;
   game_screen_height = SCREEN_HEIGHT;
   game_screen_width = SCREEN_WIDTH;
+
+  if(is_level_mode)
+  {
+    game_level = 3;
+    game_level_current = 0;
+    is_game_level_quit = false;
+    for(int i=0; i<game_level; i++)
+    {
+      game_level_cond[i] = (i + 1) * 2;
+    }
+  }
+
   if(SHOW_STATUS_BAR)
   {
     game_screen_height =(int) SCREEN_HEIGHT * 0.9;
@@ -216,6 +237,25 @@ void init_wall()
     wall_color[i] =  0x8B8B7A;
   }
 }
+
+void wait_any_key()
+{
+  bool done = false;
+  while ( (done == false) && (SDL_WaitEvent(&event)))
+  {
+    if (event.type == SDL_KEYDOWN)
+    {
+      switch(event.key.keysym.sym)
+      {
+        case SDLK_SPACE:
+          done = true;
+          break;
+        default: ;
+      }
+    }
+  }
+}
+
 bool load_files()
 {
   font = TTF_OpenFont( "/usr/share/fonts/TTF/DejaVuSans.ttf", 26 );
@@ -305,6 +345,7 @@ void usage()
   cout << "    -t, --timeout     " << "Time limit default:120sec" << endl;
   cout << "    -p, --speed       " << "Snake speed (0~MAX),number bigger will slowly" << endl;
   cout << "    -n, --nodie-body  " << "You will never die,when snake head touch snake body" << endl;
+  cout << "    -l, --level       " << "Level mode" << endl;
   cout << "        --help        " << "Display this page" << endl;
   cout << "    Example:" << endl;
   cout << "    snake -s -b --timeout=360" << endl;
@@ -320,7 +361,7 @@ int parse_opt(int argc, char *argv[])
     GETOPT_HELP_OPTION
   };
 
-  const char* short_options = "p:t::wson";
+  const char* short_options = "p:t::wsonl";
   const struct option long_options[] = {
     {"speed",   required_argument, 0, 'p'},
     {"timeout", optional_argument, 0, 't'},
@@ -328,6 +369,7 @@ int parse_opt(int argc, char *argv[])
     {"scroe",   no_argument,       0, 's'},
     {"obstacle",   no_argument,    0, 'o'},
     {"nodie-body",   no_argument,  0, 'n'},
+    {"level",   no_argument,  0, 'l'},
     {"help", no_argument, 0, GETOPT_HELP_OPTION},
     {0,0,0,0},
   };
@@ -340,6 +382,7 @@ int parse_opt(int argc, char *argv[])
       case 'p':
         if(optarg)
         {
+          is_speed = true;
           l_opt_arg = optarg;
           game_tick_period = atoi(l_opt_arg);
         }
@@ -375,6 +418,15 @@ int parse_opt(int argc, char *argv[])
         is_no_die_mode = true;
         break;
 
+      case 'l':
+        SHOW_STATUS_BAR = true;
+        is_score_mode = true;
+
+        is_obstacle_mode = true;
+
+        is_level_mode = true;
+        break;
+
       case GETOPT_HELP_OPTION:
         usage();
         break;
@@ -391,7 +443,6 @@ bool is_timeout_mode_kill()
   {
     if (SDL_GetTicks() >= game_timeout_time)
     {
-      cout << "Game Over!" << endl;
       return true;
     }
     // game_timeout_time -= game_global_time;
@@ -515,6 +566,7 @@ void cal_snake_nowall_position()
     }
   }
 }
+
 void draw_snake()
 {
   for(int i=0;i<snake_length;i++)
@@ -522,7 +574,8 @@ void draw_snake()
     FillRect(snake[i].x, snake[i].y, snake[i].w, snake[i].h, snake_color[i]);
   }
 }
-void draw_game_information_on_statusbar()
+
+void draw_game_info_statusbar()
 {
   FillRect(0, STATUS_BAR+8, SCREEN_WIDTH,(int) SCREEN_HEIGHT*0.1-8, 0x0000FF);
   //Render the text
@@ -534,12 +587,37 @@ void draw_game_information_on_statusbar()
   }
   if(is_timeout_mode)
   {
-    game_information<< "Time:" << int((game_timeout_time - game_global_time) / 1000) << "s";
+    game_information << "Time:" << int((game_timeout_time - game_global_time) / 1000) << "s";
   }
 
   message = TTF_RenderText_Solid( font, game_information.str().c_str(), textColor );
   apply_surface( 0, STATUS_BAR+8, message, screen );
 }
+
+void draw_game_statbar(string text)
+{
+  FillRect(0, STATUS_BAR+8, SCREEN_WIDTH,(int) SCREEN_HEIGHT*0.1-8, 0x0000FF);
+  //Render the text
+  stringstream game_information;
+
+  game_information << text;
+
+  SDL_Surface *message_tmp = NULL;
+  message_tmp = TTF_RenderText_Solid( font, game_information.str().c_str(), textColor );
+  apply_surface( 0, STATUS_BAR+8, message_tmp, screen );
+
+  SDL_Flip(screen);
+}
+void draw_game_win()
+{
+  draw_game_statbar("You Win The Game.");
+}
+
+void draw_game_lose()
+{
+  draw_game_statbar("Game Over.");
+}
+
 bool check_collision_snake_self()
 {
   for(int i=1; i<snake_length; i++)
@@ -597,7 +675,12 @@ void draw_wall()
 
 bool check_die_snake_obstacle()
 {
-  for(int i=0; i<8; i++)
+  int size = 8;
+  if(is_level_mode)
+  {
+    size = game_level_cond[game_level_current];
+  }
+  for(int i=0; i<size; i++)
   {
     if(check_collision(snake[0],obstacle[i]))
     {
@@ -608,9 +691,9 @@ bool check_die_snake_obstacle()
   return false;
 }
 
-void draw_obstacle()
+void draw_obstacle(int size)
 {
-  for(int i=0; i<8; i++)
+  for(int i=0; i<size; i++)
   {
     SDL_FillRect(screen, &obstacle[i], obstacle_color[0]);
   }
@@ -638,7 +721,12 @@ bool fruit_on_obstacle_p()
 {
   if(is_obstacle_mode)
   {
-    for(int i=0; i<8; i++)
+    int size = 8;
+    if(is_level_mode)
+    {
+      size = game_level_cond[game_level_current];
+    }
+    for(int i=0; i<size; i++)
     {
       if(check_collision(fruit[0],obstacle[i]))
       {
@@ -715,10 +803,19 @@ void game_update_obstacle()
     if(check_die_snake_obstacle())
     {
       game_quit = true;
+      return;
     }
     else
     {
-      draw_obstacle();
+      if(is_level_mode)
+      {
+        draw_obstacle(game_level_cond[game_level_current]);
+        return;
+      }
+      else
+      {
+        draw_obstacle(8);
+      }
     }
   }
   //end of obstacle
@@ -755,41 +852,67 @@ void game_update_fruit()
 }
 void game_update_statusbar()
 {
-      //status bar
-      if(SHOW_STATUS_BAR)
-      {
-        draw_game_information_on_statusbar();
-      }
-      //end of status bar
+  //status bar
+  if(SHOW_STATUS_BAR)
+  {
+    draw_game_info_statusbar();
+  }
+  //end of status bar
 }
 void game_update_snake()
 {
-      //snake
-      cal_snake_position();
+  //snake
+  cal_snake_position();
 
-      if(is_wall_mode != true)
-      {
-        cal_snake_nowall_position();
-      }
+  if(is_wall_mode != true)
+  {
+    cal_snake_nowall_position();
+  }
 
-      if(is_no_die_mode != true)
-      {
-        if(check_collision_snake_self())
-        {
-          game_quit = true;
-        }
-      }
-      draw_snake();
-      //end of snake
+  if(is_no_die_mode != true)
+  {
+    if(check_collision_snake_self())
+    {
+      game_quit = true;
+    }
+  }
+  draw_snake();
+  //end of snake
 }
 
-void start_game()
+void game_update_time()
 {
-  //start handle game
-  game_quit = false;
+  game_global_time = SDL_GetTicks();
+}
 
-  srand((unsigned)time( NULL ));
+bool is_game_fps()
+{
+  if ((SDL_GetTicks() - game_global_time) >= game_tick_period)
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
 
+void game_update_level()
+{
+  if(is_level_mode)
+  {
+    if(game_score == game_level_cond[game_level_current])
+    {
+      game_level_current = game_level_current + 1;
+      is_game_level_quit = true;
+      game_quit = true;
+      game_score = 0;
+    }
+  }
+}
+
+void game_main_loop()
+{
   while (game_quit == false)
   {
     if (game_quit == true)
@@ -804,33 +927,77 @@ void start_game()
       break;
     }
 
-    // snake handle keyboard
-    game_handle_input();
-
     //draw anything
-    if ( (SDL_GetTicks() - game_global_time) >= game_tick_period)
+    if ( is_game_fps() )
     {
+      // snake handle keyboard
+      game_handle_input();
+
+      // realy show game screen
+      SDL_Flip(screen);
+
       // clear screen
       SDL_FillRect( screen, &screen->clip_rect, SDL_MapRGB( screen->format, 0x00, 0x00, 0x00 ) );
-      // next draw anything
 
       game_update_wall();
 
       game_update_obstacle();
 
       game_update_fruit();
+      
+      game_update_level();
 
       game_update_statusbar();
 
       game_update_snake();
 
-      game_global_time = SDL_GetTicks();
+      game_update_time();
     }
-
-    SDL_Flip(screen);
-
-    // SDL_Delay( 50 );
   }
+}
+
+bool is_game_level_end()
+{
+  if (game_level_current >= game_level )
+  {
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+void game_loop()
+{
+  do {
+    game_main_loop(); //imporant game main loop function
+
+    if(is_level_mode)
+    {
+      if(is_game_level_end() == false)
+      {
+        if(is_game_level_quit)
+        {
+          game_quit = false;
+          is_game_level_quit = false;
+
+          stringstream game_info;
+          game_info << "Level " << game_level_current << ", Press SPACE key to next level .";
+          string result = game_info.str();
+          draw_game_statbar(result);
+          wait_any_key();
+        }
+      }
+    }
+  } while(is_level_mode && (is_game_level_end() == false) && game_quit == false );
+}
+
+void start_game()
+{
+  srand((unsigned)time( NULL ));
+
+  game_loop();
 }
 
 int setup()
@@ -865,21 +1032,53 @@ int setup()
   return 0;
 }
 
-void wait_any_key()
+void wait_quit_key()
 {
   bool done = false;
-  while((!done) && (SDL_WaitEvent(&event)))
+  while ( (done == false) && (SDL_WaitEvent(&event)))
   {
-    switch(event.type)
+    if (event.type == SDL_KEYDOWN)
     {
-      case SDLK_ESCAPE:
-        done = true;
+      switch(event.key.keysym.sym)
+      {
+        case SDLK_ESCAPE:
+          done = true;
+          break;
 
-      default: ;
+        default: ;
+      }
+    }
+  }
+}
 
-    }   // End switch
-  }   // End while
-  return;
+bool is_level_win()
+{
+  if(is_level_mode)
+  {
+    if(game_level == game_level_current)
+    {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+void clean()
+{
+  if (game_quit == true)
+  {
+    if(is_level_win())
+    {
+      draw_game_win();
+    }
+    else if(is_level_win() == false)
+    {
+      draw_game_lose();
+    }
+    wait_quit_key();
+    sdl_clean_up();
+  }
 }
 
 int main(int argc, char *argv[])
@@ -890,11 +1089,7 @@ int main(int argc, char *argv[])
 
   start_game();
 
-  if (game_quit == true)
-  {
-    wait_any_key();
-    sdl_clean_up();
-  }
+  clean();
 
   return 0;
 }

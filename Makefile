@@ -1,5 +1,6 @@
 TARGET = snake
 CC = g++
+CFLAG  = -std=c++11
 LDFLAG = -Os -Wall -Wextra -lSDL -lSDL_ttf -lSDL_image
 
 SRC := snake.cpp
@@ -11,10 +12,10 @@ option:
 	@echo  ${LDFLAG}
 
 %.o:%.cpp
-	${CC} -c $<
+	${CC} -c ${CFLAG} $<
 
 ${TARGET}: ${OBJ}
-	${CC} -o $@ ${OBJ} ${LDFLAG}
+	${CC} -o $@ ${OBJ} ${CFLAG} ${LDFLAG} 
 
 global:
 	@global -uv

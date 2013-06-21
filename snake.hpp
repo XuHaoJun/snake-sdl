@@ -7,12 +7,20 @@ bool  is_score_mode   = false;
 bool  is_obstacle_mode = false;
 bool  is_no_die_mode   = false;
 bool  is_wall_mode = false;
+bool  is_level_mode = false;
+bool  is_speed = false;
 
 Uint32 game_global_time;
+Uint32 game_init_time;
 int game_screen_height;
 int game_screen_width;
 int game_tick_period;
 int game_score;
+
+int game_level;
+int game_level_current;
+int game_level_cond[3];
+bool is_game_level_quit;
 
 //about snake
 int snake_length;
