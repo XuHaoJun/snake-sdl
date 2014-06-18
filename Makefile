@@ -1,21 +1,25 @@
 TARGET = snake
 CC = g++
-CFLAG  = -std=c++11
-LDFLAG = -Os -Wall -Wextra -lSDL -lSDL_ttf -lSDL_image
+CFLAGS = -std=c++11 ${3RD_CFLAGS}
+3RD_CFLAGS = $(shell pkg-config sdl --cflags)
+LDFLAGS = -Os -Wall -Wextra -lSDL -lSDL_ttf -lSDL_image
 
 SRC := snake.cpp
-OBJ := ${SRC:.cpp=.o}
+#$(wildcard ${SRC}/*.cpp)
+OBJ := $(notdir ${SRC:.cpp=.o})
+#REL_OBJS=$(addprefix)
 
 all: ${TARGET}
 
 option:
-	@echo  ${LDFLAG}
+	@echo  "LDFLAGS:" ${LDFLAGS}
+	@echo  "CFLAGS:" ${CFLAGS}
 
 %.o:%.cpp
-	${CC} -c ${CFLAG} $<
+	${CC} -c ${CFLAGS} $<
 
 ${TARGET}: ${OBJ}
-	${CC} -o $@ ${OBJ} ${CFLAG} ${LDFLAG} 
+	${CC} -o $@ ${OBJ} ${CFLAGS} ${LDFLAGS} 
 
 global:
 	@global -uv
