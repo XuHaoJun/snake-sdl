@@ -1,0 +1,4 @@
+* Snake
+A simple snake game.
+* Screenshot
+[[./assets/screenshot/snake01.jpg]]
